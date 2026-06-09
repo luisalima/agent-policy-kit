@@ -1,7 +1,7 @@
-# Agent Operating Policy — Lazy-Loading Proposal
+# agent-policy-kit — Lazy-Loading Proposal
 
-Convert the monolithic AGENTS.md into three layers so policy content only enters
-context when it's actually needed.
+Convert the monolithic AGENTS.md into a shared dispatch table plus tool-specific
+adapters, so policy content only enters context when it's actually needed.
 
 ---
 
@@ -9,38 +9,110 @@ context when it's actually needed.
 
 | Layer | File(s) | Loads when |
 |---|---|---|
-| Dispatch table | `AGENTS.md` | Every turn (kept tiny) |
-| Workflow skills | `.claude/commands/*.md` | Skill is invoked |
-| Hard enforcement | `.claude/settings.json` hooks | Event fires (unconditional) |
+| Shared dispatch table | `AGENTS.md` | Codex, Amp, Pi, and other AGENTS-aware tools |
+| Claude adapter | `CLAUDE.md` | Every Claude Code turn |
+| Workflow skills | `.agents/skills/<name>/SKILL.md`, copied to `.claude/skills/<name>/SKILL.md` for Claude | Skill is invoked |
+| Hard enforcement | `.codex/hooks.json`, `.claude/settings.json`, shared `scripts/hooks/*` | Event fires |
 
 ---
 
-## 1. Trimmed AGENTS.md (dispatch table only)
+## 1. Shared dispatch table
 
 ```markdown
 ## Agent rules
 
-- Before writing source code for any behavior with an assertable contract: invoke /tdd
-- Before closing any task or raising a PR: invoke /done
-- When making a costly or hard-to-reverse architectural decision: invoke /adr
+- Before writing source code for any behavior with an assertable contract: use the tdd skill
+- When setting up or managing repo task/question tracking in `docs/tasks/`: use the opentasks skill
+- Before closing any task or raising a PR: use the done skill
+- When making a costly or hard-to-reverse architectural decision: use the adr skill
 - When blocked, uncertain, or two requirements conflict: stop and ask — never guess
 - Tests assert observable behavior, not implementation; they must survive a refactor
 ```
 
-Five lines. The detailed workflow lives in the skills below.
+Six lines. The detailed workflow lives in the skills below.
 
-> Note: Claude Code reads `AGENTS.md`; other agents (Cursor, Codex, etc.) read `AGENTS.md`.
-> If you use Claude Code exclusively, symlink or duplicate as needed.
+Keep `AGENTS.md` as the canonical shared source. Codex, Amp, and Pi read it
+directly. Claude Code uses `CLAUDE.md`, so add a tiny adapter:
+
+```markdown
+# Claude project instructions
+
+Follow the shared project policy in @AGENTS.md.
+```
+
+If `@AGENTS.md` imports are not available in a Claude environment, duplicate the
+six-line dispatch table in `CLAUDE.md` instead. Do not maintain two different
+policies.
 
 ---
 
 ## 2. Skills
 
-Each file lives at `.claude/commands/<name>.md` and is invoked with `/<name>`.
+Author each workflow once as an Agent Skill under `.agents/skills/`, then copy
+it into Claude's `.claude/skills/` adapter path during install.
 
-### `/tdd` — TDD discipline
+Recommended repo layout:
+
+```text
+.agents/skills/opentasks/SKILL.md # Codex, Amp, Pi
+.agents/skills/tdd/SKILL.md
+.agents/skills/done/SKILL.md
+.agents/skills/adr/SKILL.md
+.agents/skills/spike/SKILL.md
+.agents/skills/slice/SKILL.md
+
+.claude/skills/opentasks/SKILL.md # Claude Code adapter copy
+.claude/skills/tdd/SKILL.md
+.claude/skills/done/SKILL.md
+.claude/skills/adr/SKILL.md
+.claude/skills/spike/SKILL.md
+.claude/skills/slice/SKILL.md
+```
+
+Claude also supports the older `.claude/commands/<name>.md` custom-command
+layout. Use that only if you need command compatibility; prefer skill
+directories for cross-agent sharing.
+
+Invocation differs by tool:
+
+- Claude Code: `/opentasks`, `/tdd`, `/done`, `/adr`, etc.
+- Codex: select the skill with `/skills`, mention `$opentasks`, or let Codex invoke it from the skill description.
+- Amp: use the skill from `.agents/skills/` according to Amp's skill invocation flow.
+- Pi: `/skill:opentasks`, `/skill:tdd`, `/skill:done`, etc.
+
+### `opentasks` — Manage repo task/question tracking
 
 ```markdown
+---
+name: opentasks
+description: "Maintain a lightweight docs/tasks/ repo convention for coding-agent tasks and open questions: bootstrap the folder, create task/question markdown files, update status, close or reopen items, list open work, and rebuild the derived index."
+when_to_use: "Use when the user asks to set up a tasks folder, create a task, open a question, close or mark done, mark blocked/doing, reopen an item, show open tasks, list questions, or sync a task index. Trigger phrases include: create a task for X; open a question about Y; close Q3; mark done; set up the tasks folder; show open tasks; add a question about Y."
+argument-hint: "[bootstrap | new task <title> | new question <title> | start <item> | block <item> [reason] | done <item> | reopen <item> | list [filter] | sync | status]"
+---
+
+Manage a lightweight repo convention in `docs/tasks/`, not an external task
+manager. Main operations:
+
+- `/opentasks bootstrap` sets up `docs/tasks/README.md` and `docs/tasks/TASK_INDEX.md`.
+- `/opentasks new task <title>` creates a numbered `t<N>-<slug>.md` task.
+- `/opentasks new question <title>` creates a numbered `q<N>-<slug>.md` question.
+- `/opentasks start|block|done|reopen <item>` updates item status.
+- `/opentasks list [filter]`, `/opentasks sync`, and `/opentasks status` report or rebuild the derived index.
+
+Use questions for unresolved decisions, ADRs for durable decisions, and tasks for
+execution: `Q<N> -> ADR -> T<N>`.
+```
+
+---
+
+### `tdd` — TDD discipline
+
+```markdown
+---
+name: tdd
+description: Use before writing source code for behavior with an assertable contract. Do not use for pure formatting, docs-only edits, or declared exploratory spikes.
+---
+
 Walk the TDD cycle for the current task:
 
 1. Identify the behavior to assert. If unclear, ask before proceeding.
@@ -61,9 +133,14 @@ An undeclared deviation is not a spike — it's skipped tests.
 
 ---
 
-### `/done` — Definition of done checklist
+### `done` — Definition of done checklist
 
 ```markdown
+---
+name: done
+description: Use before closing a task, raising a PR, pushing, or reporting completion.
+---
+
 Check every item before closing the task or raising a PR:
 
 - [ ] Suite green, linter clean — no failing or skipped tests, no lint errors
@@ -78,9 +155,14 @@ Do not stop short of this list. Do not keep polishing past it.
 
 ---
 
-### `/adr` — Architectural Decision Record
+### `adr` — Architectural Decision Record
 
 ```markdown
+---
+name: adr
+description: Use when a costly or hard-to-reverse architectural decision is being made.
+---
+
 Write an ADR when a decision is:
 - Costly to reverse
 - Constrains future choices
@@ -109,9 +191,14 @@ Template:
 
 ---
 
-### `/spike` — Declare a spike
+### `spike` — Declare a spike
 
 ```markdown
+---
+name: spike
+description: Use when behavior is not yet known and exploratory work is needed before TDD.
+---
+
 A spike is exploratory work where you don't yet know what the behavior should be.
 
 Before starting:
@@ -121,14 +208,19 @@ Before starting:
 
 After the spike:
 - Show the discard explicitly
-- Start the real implementation from scratch with /tdd
+- Start the real implementation from scratch with the tdd skill
 ```
 
 ---
 
-### `/slice` — Scope a vertical slice
+### `slice` — Scope a vertical slice
 
 ```markdown
+---
+name: slice
+description: Use before planning implementation to define the smallest demonstrable vertical slice.
+---
+
 Before planning implementation, define the smallest vertical slice:
 - What can a user/caller do after this slice that they couldn't before?
 - Does it touch every layer needed to be demonstrable end-to-end?
@@ -142,6 +234,22 @@ Never plan horizontal layers (all models first, then all controllers, etc.).
 
 ## 3. Hooks (hard enforcement)
 
+Hooks are not portable by file path. Keep the hook logic in shared scripts, then
+wire each agent to those scripts through its native config.
+
+Recommended shared scripts:
+
+```text
+scripts/hooks/check_git_push.py
+scripts/hooks/check_secret_edit.py
+```
+
+Each script reads the hook JSON from stdin when available, inspects the relevant
+command or edit payload, prints a concise warning for soft policy violations, and
+exits non-zero only for hard blocks.
+
+### Claude Code
+
 In `.claude/settings.json`:
 
 ```json
@@ -153,7 +261,7 @@ In `.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'echo \"$CLAUDE_TOOL_INPUT\" | grep -qE \"git push\" && echo \"HOOK: run /done before pushing — suite must be green and no secrets staged\" || true'"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/check_git_push.py\""
           }
         ]
       },
@@ -162,7 +270,7 @@ In `.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'echo \"$CLAUDE_TOOL_INPUT\" | grep -qiE \"(password|secret|api_key|token|private_key)\" && echo \"HOOK: possible credential in edit — review before proceeding\" || true'"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/hooks/check_secret_edit.py\""
           }
         ]
       }
@@ -171,8 +279,44 @@ In `.claude/settings.json`:
 }
 ```
 
-Hook output is injected into the conversation. Claude sees it and must respond.
-For a hard block (not just a warning), exit with a non-zero code.
+Claude command hooks receive structured JSON on stdin. Avoid relying on ad hoc
+environment variables for hook input.
+
+### Codex
+
+In `.codex/hooks.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/hooks/check_git_push.py\"",
+            "statusMessage": "Checking push policy"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/hooks/check_secret_edit.py\"",
+            "statusMessage": "Checking edit for secrets"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Codex project-local hooks must be reviewed and trusted before they run. Use
+`/hooks` to inspect and trust them in the current session.
 
 ---
 
@@ -180,28 +324,30 @@ For a hard block (not just a warning), exit with a non-zero code.
 
 | Rule | Mechanism | Rationale |
 |---|---|---|
-| 1. TDD discipline | `/tdd` skill + AGENTS.md trigger | Workflow with steps; dispatched by AGENTS.md |
-| 2. Tests assert intent | AGENTS.md (1 line) | Mindset rule; must influence every test written |
-| 3. Never weaken tests | AGENTS.md (implicit in rule 2) | Same mindset; no better hook event |
-| 4. Version control / push gate | Hook (PreToolUse on Bash) + `/done` | Hard check on push; checklist for the rest |
-| 5. Read before write | AGENTS.md (existing default behavior) | Already Claude's default; no hook needed |
-| 6. Vertical slices | `/slice` skill + AGENTS.md trigger | Planning workflow |
-| 7. Testing the CLI | Part of `/tdd` | Covered under TDD cycle |
-| 8. Stop when blocked | AGENTS.md (1 line) | Mindset; must be always-on |
-| 9. Build supporting tools | Drop — covered by AGENTS.md defaults | Too situational; not worth a skill |
-| 10. Definition of done | `/done` skill + AGENTS.md trigger | Checklist; dispatched by AGENTS.md |
-| 11. ADRs | `/adr` skill + AGENTS.md trigger | Template + criteria; lazy-loaded |
+| 1. TDD discipline | `tdd` skill + shared dispatch trigger | Workflow with steps; dispatched by `AGENTS.md`/`CLAUDE.md` |
+| 2. Open tasks | `opentasks` skill + shared dispatch trigger | Repo-native `docs/tasks/` convention for durable tasks and open questions |
+| 3. Tests assert intent | AGENTS.md (1 line) | Mindset rule; must influence every test written |
+| 4. Never weaken tests | AGENTS.md (implicit in rule 3) | Same mindset; no better hook event |
+| 5. Version control / push gate | Agent-specific hook + `done` skill | Hard check on push; checklist for the rest |
+| 6. Read before write | Shared dispatch or agent default | Mindset rule; keep it always-on only if the old policy required it |
+| 7. Vertical slices | `slice` skill + shared dispatch trigger | Planning workflow |
+| 8. Testing the CLI | Part of `tdd` | Covered under TDD cycle |
+| 9. Stop when blocked | AGENTS.md (1 line) | Mindset; must be always-on |
+| 10. Build supporting tools | Drop | Too situational; not worth a skill |
+| 11. Definition of done | `done` skill + shared dispatch trigger | Checklist; dispatched by `AGENTS.md`/`CLAUDE.md` |
+| 12. ADRs | `adr` skill + shared dispatch trigger | Template + criteria; lazy-loaded |
 
 ---
 
 ## What this buys you
 
-**Before:** AGENTS.md loads ~60 lines of policy every turn, whether or not any of
+**Before:** each agent loads the full policy every turn, whether or not any of
 it is relevant to "fix this typo."
 
-**After:** AGENTS.md loads 5 lines every turn. The TDD workflow (15 lines) only
-enters context when source code is about to be written. The ADR template (20 lines)
-only enters context when an architectural decision is in play. Hooks enforce the
-non-negotiables unconditionally.
+**After:** `AGENTS.md` holds the canonical six-line policy, `CLAUDE.md` only
+adapts Claude Code to that shared policy, and each workflow loads only when its
+skill is used. Hooks enforce the mechanical checks through each agent's native
+hook system while sharing the underlying script logic.
 
-Context budget spent on policy drops ~90% for routine tasks.
+Context budget spent on policy drops sharply for routine tasks without making
+the policy Claude-only or Codex-only.
