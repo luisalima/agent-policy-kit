@@ -18,8 +18,9 @@ Options:
   --force         Replace existing installed skill folders.
   -h, --help      Show this help.
 
-The installer appends missing instruction sections but does not overwrite an
-existing AGENTS.md or CLAUDE.md file.
+The installer appends or updates only the managed agent-policy-kit block and
+does not overwrite user-authored content in existing AGENTS.md or CLAUDE.md
+files.
 
 If no agent flags are provided, installs all supported layouts.
 EOF
@@ -91,7 +92,10 @@ target_root="$(cd "$target" && pwd)"
 append_or_create() {
   local destination="$1"
   local template="$2"
-  local marker="$3"
+  local legacy_marker="$3"
+  local start_marker="<!-- agent-policy-kit:start -->"
+  local end_marker="<!-- agent-policy-kit:end -->"
+  local temp_file
 
   if [ ! -f "$destination" ]; then
     mkdir -p "$(dirname "$destination")"
@@ -100,8 +104,40 @@ append_or_create() {
     return
   fi
 
-  if grep -qF "$marker" "$destination"; then
-    echo "kept ${destination#$target_root/} (section already present)"
+  if grep -qF "$start_marker" "$destination"; then
+    if ! grep -qF "$end_marker" "$destination"; then
+      echo "ERROR: ${destination#$target_root/} has ${start_marker} without ${end_marker}" >&2
+      exit 1
+    fi
+
+    temp_file="$(mktemp)"
+    awk \
+      -v start_marker="$start_marker" \
+      -v end_marker="$end_marker" \
+      -v template="$template" '
+        $0 == start_marker {
+          while ((getline line < template) > 0) {
+            print line
+          }
+          close(template)
+          in_block = 1
+          next
+        }
+        $0 == end_marker && in_block {
+          in_block = 0
+          next
+        }
+        !in_block {
+          print
+        }
+      ' "$destination" > "$temp_file"
+    mv "$temp_file" "$destination"
+    echo "updated ${destination#$target_root/} (replaced managed block)"
+    return
+  fi
+
+  if grep -qF "$legacy_marker" "$destination"; then
+    echo "kept ${destination#$target_root/} (legacy section already present)"
     return
   fi
 

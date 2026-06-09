@@ -1,3 +1,4 @@
+<!-- agent-policy-kit:start -->
 ## Agent rules
 
 - Before writing source code for any behavior with an assertable contract: use the tdd skill
@@ -17,3 +18,4 @@ This project can use `docs/tasks/` as a lightweight repo convention for work ite
 - Keep tasks sized for one focused agent session or one coherent PR.
 - Use questions for unresolved decisions, ADRs for durable decisions, and tasks for execution.
 - Never create task or question files manually; use the `opentasks` skill so the index stays in sync.
+<!-- agent-policy-kit:end -->

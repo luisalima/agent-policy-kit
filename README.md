@@ -7,16 +7,16 @@ Codex, Amp, Pi, and Claude Code can use the same workflows.
 
 ## Install Into A Repo
 
-One-liner clone + install into the current repo from `main`:
-
-```bash
-tmp="$(mktemp -d)" && git clone --depth 1 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
-```
-
-For a pinned release, add `--branch <tag>`:
+One-liner clone + install into the current repo from the latest release:
 
 ```bash
 tmp="$(mktemp -d)" && git clone --depth 1 --branch v0.1.0 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
+```
+
+To install from `main` instead:
+
+```bash
+tmp="$(mktemp -d)" && git clone --depth 1 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
 ```
 
 From this checkout:
@@ -65,8 +65,8 @@ Agent mapping:
 - Claude Code: `CLAUDE.md` + `.claude/skills/`
 
 The installer does not overwrite existing `AGENTS.md` or `CLAUDE.md` files. It
-appends the missing policy section when needed. Existing skill folders are kept
-unless `--force` is used.
+appends or updates only the managed `agent-policy-kit` block when needed.
+Existing skill folders are kept unless `--force` is used.
 
 ## Included Skills
 
@@ -96,28 +96,8 @@ For Pi, invoke the same skill as:
 
 ## Contributing
 
-### Publish A Release
-
-Commit and push changes first, then run:
-
-```bash
-./scripts/release.sh v0.1.0 --notes "Initial release"
-```
-
-The release script:
-
-- requires a clean working tree
-- creates an annotated git tag
-- pushes the tag to `origin`
-- creates a GitHub release with `gh release create`
-
-Manual equivalent:
-
-```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
-gh release create v0.1.0 --title "v0.1.0" --notes "Initial release"
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md). CI runs installer smoke tests,
+`git diff --check`, skill metadata validation, and ShellCheck when available.
 
 ## License
 

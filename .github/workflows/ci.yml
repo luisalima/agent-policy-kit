@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check whitespace
+        run: git diff --check
+
+      - name: Validate skill metadata
+        run: ./scripts/validate-skills.sh
+
+      - name: Run installer smoke tests
+        run: ./scripts/test-install.sh
+
+      - name: Run ShellCheck
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck scripts/*.sh
+          else
+            echo "ShellCheck is not installed; skipping"
+          fi
