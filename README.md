@@ -94,7 +94,9 @@ For Pi, invoke the same skill as:
 /skill:opentasks bootstrap
 ```
 
-## Publish A Release
+## Contributing
+
+### Publish A Release
 
 Commit and push changes first, then run:
 
