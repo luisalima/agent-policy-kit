@@ -23,6 +23,7 @@ adapters, so policy content only enters context when it's actually needed.
 
 - Before writing source code for any behavior with an assertable contract: use the tdd skill
 - When setting up or managing repo task/question tracking in `docs/tasks/`: use the opentasks skill
+- When the repo lacks linting for changed code or a new language/toolchain: use the linters skill
 - Before closing any task or raising a PR: use the done skill
 - When making a costly or hard-to-reverse architectural decision: use the adr skill
 - When blocked, uncertain, or two requirements conflict: stop and ask — never guess
@@ -55,6 +56,7 @@ Recommended repo layout:
 
 ```text
 .agents/skills/opentasks/SKILL.md # Codex, Amp, Pi
+.agents/skills/linters/SKILL.md
 .agents/skills/tdd/SKILL.md
 .agents/skills/done/SKILL.md
 .agents/skills/adr/SKILL.md
@@ -62,6 +64,7 @@ Recommended repo layout:
 .agents/skills/slice/SKILL.md
 
 .claude/skills/opentasks/SKILL.md # Claude Code adapter copy
+.claude/skills/linters/SKILL.md
 .claude/skills/tdd/SKILL.md
 .claude/skills/done/SKILL.md
 .claude/skills/adr/SKILL.md
@@ -75,10 +78,10 @@ directories for cross-agent sharing.
 
 Invocation differs by tool:
 
-- Claude Code: `/opentasks`, `/tdd`, `/done`, `/adr`, etc.
+- Claude Code: `/opentasks`, `/linters`, `/tdd`, `/done`, `/adr`, etc.
 - Codex: select the skill with `/skills`, mention `$opentasks`, or let Codex invoke it from the skill description.
 - Amp: use the skill from `.agents/skills/` according to Amp's skill invocation flow.
-- Pi: `/skill:opentasks`, `/skill:tdd`, `/skill:done`, etc.
+- Pi: `/skill:opentasks`, `/skill:linters`, `/skill:tdd`, `/skill:done`, etc.
 
 ### `opentasks` — Manage repo task/question tracking
 
@@ -129,6 +132,30 @@ If the behavior is unknown (UI layout, unfamiliar API, prompt engineering):
 2. Isolate it — never mix into the production change.
 3. Show the discard before the real implementation lands.
 An undeclared deviation is not a spike — it's skipped tests.
+```
+
+---
+
+### `linters` — Add relevant static checks
+
+```markdown
+---
+name: linters
+description: Use when a repo lacks a lint command for changed code, when adding a new language/toolchain, or when asked to improve static checks. Add relevant linters conservatively, using existing project tooling first, and avoid adding dependencies without a clear project fit.
+---
+
+Add or improve static checks that match the repository's languages, package
+managers, and existing conventions.
+
+1. Inspect existing scripts, package manifests, CI files, pre-commit config,
+   formatters, and dependency managers.
+2. Prefer existing tooling and mirror nearby package/module patterns.
+3. Add the smallest relevant lint setup for the changed language.
+4. Wire the command into the repo's existing script, Make, task runner, or CI convention.
+5. Run the lint command and keep unrelated broad cleanup out of scope.
+
+Do not introduce a new package manager, replace an established linter, or weaken
+rules just to make the current change pass.
 ```
 
 ---
@@ -326,16 +353,17 @@ Codex project-local hooks must be reviewed and trusted before they run. Use
 |---|---|---|
 | 1. TDD discipline | `tdd` skill + shared dispatch trigger | Workflow with steps; dispatched by `AGENTS.md`/`CLAUDE.md` |
 | 2. Open tasks | `opentasks` skill + shared dispatch trigger | Repo-native `docs/tasks/` convention for durable tasks and open questions |
-| 3. Tests assert intent | AGENTS.md (1 line) | Mindset rule; must influence every test written |
-| 4. Never weaken tests | AGENTS.md (implicit in rule 3) | Same mindset; no better hook event |
-| 5. Version control / push gate | Agent-specific hook + `done` skill | Hard check on push; checklist for the rest |
-| 6. Read before write | Shared dispatch or agent default | Mindset rule; keep it always-on only if the old policy required it |
-| 7. Vertical slices | `slice` skill + shared dispatch trigger | Planning workflow |
-| 8. Testing the CLI | Part of `tdd` | Covered under TDD cycle |
-| 9. Stop when blocked | AGENTS.md (1 line) | Mindset; must be always-on |
-| 10. Build supporting tools | Drop | Too situational; not worth a skill |
-| 11. Definition of done | `done` skill + shared dispatch trigger | Checklist; dispatched by `AGENTS.md`/`CLAUDE.md` |
-| 12. ADRs | `adr` skill + shared dispatch trigger | Template + criteria; lazy-loaded |
+| 3. Relevant linting | `linters` skill + shared dispatch trigger | Adds project-appropriate static checks without dependency churn |
+| 4. Tests assert intent | AGENTS.md (1 line) | Mindset rule; must influence every test written |
+| 5. Never weaken tests | AGENTS.md (implicit in rule 4) | Same mindset; no better hook event |
+| 6. Version control / push gate | Agent-specific hook + `done` skill | Hard check on push; checklist for the rest |
+| 7. Read before write | Shared dispatch or agent default | Mindset rule; keep it always-on only if the old policy required it |
+| 8. Vertical slices | `slice` skill + shared dispatch trigger | Planning workflow |
+| 9. Testing the CLI | Part of `tdd` | Covered under TDD cycle |
+| 10. Stop when blocked | AGENTS.md (1 line) | Mindset; must be always-on |
+| 11. Build supporting tools | Drop | Too situational; not worth a skill |
+| 12. Definition of done | `done` skill + shared dispatch trigger | Checklist; dispatched by `AGENTS.md`/`CLAUDE.md` |
+| 13. ADRs | `adr` skill + shared dispatch trigger | Template + criteria; lazy-loaded |
 
 ---
 

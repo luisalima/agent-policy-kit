@@ -72,6 +72,7 @@ unless `--force` is used.
 
 - `opentasks`: upstream skill from `https://github.com/luisalima/opentasks-skill`
   for managing `docs/tasks/` task and question tracking.
+- `linters`: conservative workflow for adding or improving project-appropriate lint commands.
 - `tdd`: test-first implementation workflow.
 - `done`: definition-of-done checklist.
 - `adr`: architectural decision record workflow.

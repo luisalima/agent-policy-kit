@@ -2,6 +2,7 @@
 
 - Before writing source code for any behavior with an assertable contract: use the tdd skill
 - When setting up or managing repo task/question tracking in `docs/tasks/`: use the opentasks skill
+- When the repo lacks linting for changed code or a new language/toolchain: use the linters skill
 - Before closing any task or raising a PR: use the done skill
 - When making a costly or hard-to-reverse architectural decision: use the adr skill
 - When blocked, uncertain, or two requirements conflict: stop and ask - never guess
