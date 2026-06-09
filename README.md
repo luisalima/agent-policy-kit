@@ -7,6 +7,18 @@ Codex, Amp, Pi, and Claude Code can use the same workflows.
 
 ## Install Into A Repo
 
+One-liner clone + install into the current repo from `main`:
+
+```bash
+tmp="$(mktemp -d)" && git clone --depth 1 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
+```
+
+For a pinned release, add `--branch <tag>`:
+
+```bash
+tmp="$(mktemp -d)" && git clone --depth 1 --branch v0.1.0 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
+```
+
 From this checkout:
 
 ```bash
@@ -80,3 +92,30 @@ For Pi, invoke the same skill as:
 ```text
 /skill:opentasks bootstrap
 ```
+
+## Publish A Release
+
+Commit and push changes first, then run:
+
+```bash
+./scripts/release.sh v0.1.0 --notes "Initial release"
+```
+
+The release script:
+
+- requires a clean working tree
+- creates an annotated git tag
+- pushes the tag to `origin`
+- creates a GitHub release with `gh release create`
+
+Manual equivalent:
+
+```bash
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+gh release create v0.1.0 --title "v0.1.0" --notes "Initial release"
+```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
