@@ -86,6 +86,7 @@ assert_shared_layout() {
   local repo="$1"
   assert_file "$repo/AGENTS.md"
   assert_dir "$repo/.agents/skills/opentasks"
+  assert_dir "$repo/.agents/skills/security"
   assert_contains "$repo/AGENTS.md" "<!-- agent-policy-kit:start -->"
   assert_contains "$repo/AGENTS.md" "<!-- agent-policy-kit:end -->"
   assert_contains "$repo/AGENTS.md" "also read \`USER.md\` in the same skill directory"
@@ -95,6 +96,7 @@ assert_claude_layout() {
   local repo="$1"
   assert_file "$repo/CLAUDE.md"
   assert_dir "$repo/.claude/skills/opentasks"
+  assert_dir "$repo/.claude/skills/security"
   assert_contains "$repo/CLAUDE.md" "<!-- agent-policy-kit:start -->"
   assert_contains "$repo/CLAUDE.md" "<!-- agent-policy-kit:end -->"
 }

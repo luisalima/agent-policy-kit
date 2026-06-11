@@ -10,6 +10,7 @@ Check every item before closing the task or raising a PR:
 - [ ] Suite green, linter clean: no failing or skipped tests, no lint errors
 - [ ] New behavior has a test that failed before the fix and passes after
 - [ ] Docs and ADRs updated where warranted
+- [ ] For substantial changes that may affect security posture, suggested a security review with the security skill
 - [ ] No secrets or credentials staged
 - [ ] Change is on a working branch, not main
 - [ ] Result is demonstrable end-to-end

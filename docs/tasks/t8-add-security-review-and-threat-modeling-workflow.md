@@ -1,5 +1,7 @@
 ---
-status: todo
+status: done
+started: 2026-06-11
+closed: 2026-06-11
 type: task
 id: T8
 deliverable: docs
@@ -7,6 +9,7 @@ created: 2026-06-11
 links:
   - https://github.com/anthropics/claude-code-security-review/blob/main/.claude/commands/security-review.md
   - https://github.com/openai/skills/blob/main/skills/.curated/security-threat-model/SKILL.md
+output: .agents/skills/security/SKILL.md, .agents/skills/adr/SKILL.md, .agents/skills/done/SKILL.md, templates/AGENTS.md, README.md, scripts/test-install.sh
 ---
 
 # T8. Add security review and threat modeling workflow

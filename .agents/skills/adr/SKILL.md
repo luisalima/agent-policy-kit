@@ -13,6 +13,11 @@ Write an ADR when a decision is:
 
 Routine, reversible choices do not need one.
 
+If the decision changes trust boundaries, auth, authorization, privileged
+automation, network exposure, sensitive data flows, secrets handling,
+multi-tenancy, deployment topology, or third-party integrations, suggest threat
+modeling with the security skill before the decision is finalized.
+
 Use this template:
 
 ```markdown
