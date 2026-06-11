@@ -10,7 +10,7 @@ Codex, Amp, Pi, and Claude Code can use the same workflows.
 One-liner clone + install into the current repo from the latest release:
 
 ```bash
-tmp="$(mktemp -d)" && git clone --depth 1 --branch v0.1.0 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
+tmp="$(mktemp -d)" && git clone --depth 1 --branch v0.2.0 https://github.com/luisalima/agent-policy-kit.git "$tmp/agent-policy-kit" && "$tmp/agent-policy-kit/scripts/install.sh" --target .
 ```
 
 To install from `main` instead:

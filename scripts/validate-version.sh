@@ -11,12 +11,10 @@ fail() {
 version_file="$root/VERSION"
 readme="$root/README.md"
 changelog="$root/CHANGELOG.md"
-post_release_workflow="$root/.github/workflows/post-release-install.yml"
 
 [ -f "$version_file" ] || fail "missing VERSION"
 [ -f "$readme" ] || fail "missing README.md"
 [ -f "$changelog" ] || fail "missing CHANGELOG.md"
-[ -f "$post_release_workflow" ] || fail "missing .github/workflows/post-release-install.yml"
 
 version="$(sed -n '1p' "$version_file")"
 [ -n "$version" ] || fail "VERSION is empty"
@@ -31,10 +29,6 @@ fi
 
 if ! grep -qF "## $version" "$changelog"; then
   fail "CHANGELOG.md is missing heading ## $version"
-fi
-
-if ! grep -qF "default: $version" "$post_release_workflow"; then
-  fail ".github/workflows/post-release-install.yml default version is not $version"
 fi
 
 echo "release version references match $version"

@@ -29,7 +29,8 @@ git -C "$fixture" init --quiet
 git -C "$fixture" config user.email "test@example.com"
 git -C "$fixture" config user.name "Release Test"
 
-perl -0pi -e 's/## v0\.1\.0/## v9.9.9/' "$fixture/CHANGELOG.md"
+version="$(sed -n '1p' "$fixture/VERSION")"
+VERSION_TO_REPLACE="$version" perl -0pi -e 's/## \Q$ENV{VERSION_TO_REPLACE}\E/## v9.9.9/' "$fixture/CHANGELOG.md"
 
 git -C "$fixture" add .
 git -C "$fixture" commit --quiet -m "fixture"
@@ -42,7 +43,6 @@ exit 0
 EOF
 chmod +x "$fake_bin/gh"
 
-version="$(sed -n '1p' "$fixture/VERSION")"
 if (cd "$fixture" && PATH="$fake_bin:$PATH" scripts/release.sh "$version" --notes "fixture") >/dev/null 2>&1; then
   fail "expected release script to fail when readiness gates fail"
 fi

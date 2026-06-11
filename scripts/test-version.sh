@@ -14,7 +14,7 @@ make_fixture() {
   local root="$1"
   local version="$2"
 
-  mkdir -p "$root/.github/workflows"
+  mkdir -p "$root"
   printf '%s\n' "$version" > "$root/VERSION"
   cat > "$root/README.md" <<EOF
 # fixture
@@ -31,15 +31,6 @@ EOF
 ## $version
 
 - Fixture release.
-EOF
-  cat > "$root/.github/workflows/post-release-install.yml" <<EOF
-name: Post-release install
-
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        default: $version
 EOF
 }
 
@@ -65,11 +56,6 @@ assert_validator_fails "$fixture"
 fixture="$tmp_root/changelog-drift"
 make_fixture "$fixture" "v0.1.0"
 perl -0pi -e 's/## v0\.1\.0/## v9.9.9/' "$fixture/CHANGELOG.md"
-assert_validator_fails "$fixture"
-
-fixture="$tmp_root/workflow-drift"
-make_fixture "$fixture" "v0.1.0"
-perl -0pi -e 's/default: v0\.1\.0/default: v9.9.9/' "$fixture/.github/workflows/post-release-install.yml"
 assert_validator_fails "$fixture"
 
 if "$package_root/scripts/release.sh" v999.999.999 >/dev/null 2>&1; then
