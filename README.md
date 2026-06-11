@@ -78,8 +78,9 @@ the installed `SKILL.md`; the installer preserves that file on normal installs.
 - `opentasks`: upstream skill from `https://github.com/luisalima/opentasks-skill`
   for managing `docs/tasks/` task and question tracking.
 - `linters`: conservative workflow for adding or improving project-appropriate lint commands.
-- `security`: threat modeling before security-relevant architecture work and
-  focused security review after substantial security-impacting changes.
+- `security-review`: focused security review after substantial
+  security-impacting implementation changes.
+- `threat-model`: threat modeling before security-relevant architecture work.
 - `tdd`: test-first implementation workflow.
 - `done`: definition-of-done checklist.
 - `adr`: architectural decision record workflow.
@@ -101,17 +102,17 @@ For Pi, invoke the same skill as:
 /skill:opentasks bootstrap
 ```
 
-Use the `security` skill for two security workflows:
+Use the security skills at different points in the work:
 
 ```text
-/security threat model <scope>
-/security review <branch or diff>
+/threat-model <scope>
+/security-review <branch or diff>
 ```
 
 Threat modeling is intended before architecture work that changes trust
 boundaries, auth, privileged automation, deployment topology, sensitive data
-flows, or third-party integrations. Security review is intended after substantial
-implementation work with plausible security impact.
+flows, or third-party integrations. Security review is intended after
+substantial implementation work with plausible security impact.
 
 ## Contributing
 

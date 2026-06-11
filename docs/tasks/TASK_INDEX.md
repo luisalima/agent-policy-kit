@@ -20,6 +20,6 @@
 
 ## docs
 
-- [x] [T8. Add security review and threat modeling workflow](t8-add-security-review-and-threat-modeling-workflow.md) — `done` → .agents/skills/security/SKILL.md, .agents/skills/adr/SKILL.md, .agents/skills/done/SKILL.md, templates/AGENTS.md, README.md, scripts/test-install.sh
+- [x] [T8. Add security review and threat modeling workflow](t8-add-security-review-and-threat-modeling-workflow.md) — `done` → .agents/skills/security-review/SKILL.md, .agents/skills/threat-model/SKILL.md, .agents/skills/adr/SKILL.md, .agents/skills/done/SKILL.md, templates/AGENTS.md, README.md, scripts/test-install.sh
 
 ## Open questions

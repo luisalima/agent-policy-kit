@@ -9,21 +9,21 @@ created: 2026-06-11
 links:
   - https://github.com/anthropics/claude-code-security-review/blob/main/.claude/commands/security-review.md
   - https://github.com/openai/skills/blob/main/skills/.curated/security-threat-model/SKILL.md
-output: .agents/skills/security/SKILL.md, .agents/skills/adr/SKILL.md, .agents/skills/done/SKILL.md, templates/AGENTS.md, README.md, scripts/test-install.sh
+output: .agents/skills/security-review/SKILL.md, .agents/skills/threat-model/SKILL.md, .agents/skills/adr/SKILL.md, .agents/skills/done/SKILL.md, templates/AGENTS.md, README.md, scripts/test-install.sh
 ---
 
 # T8. Add security review and threat modeling workflow
 
 ## Objective
-Add a repo-local security workflow that coding agents can use for high-signal
-PR security review and repository-grounded threat modeling. The workflow should
+Add repo-local security workflows that coding agents can use for high-signal
+PR security review and repository-grounded threat modeling. The workflows should
 adapt the referenced Claude security review command and OpenAI threat modeling
 skill into this repo's shared agent-policy-kit conventions, with guidance on
 when agents should suggest each workflow.
 
 ## What we need to extract / do
-- Decide where the workflow belongs in this package, such as a new bundled skill
-  or agent command documentation, based on the existing install layout.
+- Add separate bundled workflows for PR security review and threat modeling,
+  based on the existing install layout.
 - Adapt the PR-diff security review flow to focus on newly introduced,
   concrete vulnerabilities with explicit false-positive filtering and severity
   guidance.
@@ -40,18 +40,18 @@ when agents should suggest each workflow.
   new bundled skill or installable artifact requires it.
 
 ## Done when
-- The repo contains an installable or documented security workflow covering both
-  focused PR security review and threat modeling.
-- The workflow tells agents when to suggest threat modeling before architecture
+- The repo contains separate installable or documented workflows for focused PR
+  security review and threat modeling.
+- The workflows tell agents when to suggest threat modeling before architecture
   work and when to suggest security review after implementation.
-- The workflow includes concrete scope rules, false-positive filters, severity
+- The workflows include concrete scope rules, false-positive filters, severity
   or priority guidance, and output formats.
 - Any new packaged artifact is installed for supported agent layouts and covered
   by existing validation or focused tests.
 - User-facing docs list the new security workflow and explain how to invoke it.
 
 ## Output
-Security review and threat modeling workflow artifact plus any installer,
+Security review and threat modeling workflow artifacts plus any installer,
 validation, and documentation updates needed to ship it.
 
 ## Dependencies
