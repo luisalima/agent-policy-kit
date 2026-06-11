@@ -15,7 +15,7 @@ Options:
   --claude        Install Claude support: CLAUDE.md + .claude/skills.
   --codex-only    Legacy alias for --codex.
   --claude-only   Legacy alias for --claude.
-  --force         Replace existing installed skill folders.
+  --force         Legacy compatibility flag. Skill folders are always refreshed.
   -h, --help      Show this help.
 
 The installer appends or updates only the managed agent-policy-kit block and
@@ -30,8 +30,6 @@ target="."
 agent_flag_seen=0
 install_shared=0
 install_claude=0
-force=0
-
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --target)
@@ -65,7 +63,6 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --force)
-      force=1
       shift
       ;;
     -h|--help)
@@ -89,6 +86,47 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 package_root="$(cd "$script_dir/.." && pwd)"
 target_root="$(cd "$target" && pwd)"
 
+validate_managed_block() {
+  local destination="$1"
+  local start_marker="<!-- agent-policy-kit:start -->"
+  local end_marker="<!-- agent-policy-kit:end -->"
+
+  [ -f "$destination" ] || return 0
+
+  if ! awk \
+    -v start_marker="$start_marker" \
+    -v end_marker="$end_marker" '
+      $0 == start_marker {
+        starts++
+        if (in_block || ends > 0) {
+          bad = 1
+        }
+        in_block = 1
+        next
+      }
+      $0 == end_marker {
+        ends++
+        if (!in_block) {
+          bad = 1
+        }
+        in_block = 0
+        next
+      }
+      END {
+        if (starts == 0 && ends == 0) {
+          exit 0
+        }
+        if (starts == 1 && ends == 1 && !bad && !in_block) {
+          exit 0
+        }
+        exit 1
+      }
+    ' "$destination"; then
+    echo "ERROR: ${destination#"$target_root"/} has malformed agent-policy-kit markers" >&2
+    exit 1
+  fi
+}
+
 append_or_create() {
   local destination="$1"
   local template="$2"
@@ -100,13 +138,13 @@ append_or_create() {
   if [ ! -f "$destination" ]; then
     mkdir -p "$(dirname "$destination")"
     cp "$template" "$destination"
-    echo "created ${destination#$target_root/}"
+    echo "created ${destination#"$target_root"/}"
     return
   fi
 
   if grep -qF "$start_marker" "$destination"; then
     if ! grep -qF "$end_marker" "$destination"; then
-      echo "ERROR: ${destination#$target_root/} has ${start_marker} without ${end_marker}" >&2
+      echo "ERROR: ${destination#"$target_root"/} has ${start_marker} without ${end_marker}" >&2
       exit 1
     fi
 
@@ -132,12 +170,12 @@ append_or_create() {
         }
       ' "$destination" > "$temp_file"
     mv "$temp_file" "$destination"
-    echo "updated ${destination#$target_root/} (replaced managed block)"
+    echo "updated ${destination#"$target_root"/} (replaced managed block)"
     return
   fi
 
   if grep -qF "$legacy_marker" "$destination"; then
-    echo "kept ${destination#$target_root/} (legacy section already present)"
+    echo "kept ${destination#"$target_root"/} (legacy section already present)"
     return
   fi
 
@@ -145,24 +183,65 @@ append_or_create() {
     printf '\n\n'
     cat "$template"
   } >> "$destination"
-  echo "updated ${destination#$target_root/} (appended missing section)"
+  echo "updated ${destination#"$target_root"/} (appended missing section)"
 }
 
 copy_skill_dir() {
   local source_dir="$1"
   local destination_dir="$2"
+  local destination_parent
+  local destination_name
+  local staging_parent
+  local staged_dir
+  local backup_parent=""
+  local backup_dir=""
 
-  if [ -d "$destination_dir" ]; then
-    if [ "$force" -eq 0 ]; then
-      echo "kept ${destination_dir#$target_root/} (already exists; use --force to replace)"
-      return
-    fi
-    rm -rf "$destination_dir"
+  destination_parent="$(dirname "$destination_dir")"
+  destination_name="$(basename "$destination_dir")"
+
+  mkdir -p "$destination_parent"
+  staging_parent="$(mktemp -d "$destination_parent/.${destination_name}.staging.XXXXXX")"
+  staged_dir="$staging_parent/$destination_name"
+
+  if ! cp -R "$source_dir" "$staged_dir"; then
+    rm -rf "$staging_parent"
+    return 1
   fi
 
-  mkdir -p "$(dirname "$destination_dir")"
-  cp -R "$source_dir" "$destination_dir"
-  echo "installed ${destination_dir#$target_root/}"
+  if [ -f "$destination_dir/USER.md" ]; then
+    if ! cp "$destination_dir/USER.md" "$staged_dir/USER.md"; then
+      rm -rf "$staging_parent"
+      return 1
+    fi
+  fi
+
+  if [ -d "$destination_dir" ]; then
+    backup_parent="$(mktemp -d "$destination_parent/.${destination_name}.backup.XXXXXX")"
+    backup_dir="$backup_parent/$destination_name"
+
+    if ! mv "$destination_dir" "$backup_dir"; then
+      rm -rf "$staging_parent" "$backup_parent"
+      return 1
+    fi
+
+    if ! mv "$staged_dir" "$destination_dir"; then
+      mv "$backup_dir" "$destination_dir"
+      rm -rf "$staging_parent" "$backup_parent"
+      return 1
+    fi
+
+    rm -rf "$staging_parent" "$backup_parent"
+    echo "updated ${destination_dir#"$target_root"/}"
+    return
+  fi
+
+  if ! mv "$staged_dir" "$destination_dir"; then
+    rm -rf "$staging_parent"
+    return 1
+  fi
+
+  rm -rf "$staging_parent"
+  echo "installed ${destination_dir#"$target_root"/}"
 }
 
 copy_all_skills() {
@@ -176,6 +255,14 @@ copy_all_skills() {
     fi
   done
 }
+
+if [ "$install_shared" -eq 1 ]; then
+  validate_managed_block "$target_root/AGENTS.md"
+fi
+
+if [ "$install_claude" -eq 1 ]; then
+  validate_managed_block "$target_root/CLAUDE.md"
+fi
 
 if [ "$install_shared" -eq 1 ]; then
   append_or_create "$target_root/AGENTS.md" "$package_root/templates/AGENTS.md" "## Agent rules"

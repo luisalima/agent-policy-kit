@@ -2,15 +2,23 @@
 
 ## Publish A Release
 
+Checklist:
+
+- Run `./scripts/validate-skills.sh`, `./scripts/validate-version.sh`, `./scripts/test-install.sh`, and `shellcheck scripts/*.sh`.
+- Confirm the README release install command is pinned to the tag being released.
+- Tag and publish the release.
+- Test install from the released tag with `./scripts/test-release-install.sh <tag>`.
+
 Commit and push changes first, then run:
 
 ```bash
-./scripts/release.sh v0.1.0 --notes "Initial release"
+./scripts/release.sh "$(cat VERSION)" --notes "Initial release"
 ```
 
 The release script:
 
 - requires a clean working tree
+- runs skill metadata validation, release-version validation, installer smoke tests, and ShellCheck
 - creates an annotated git tag
 - pushes the tag to `origin`
 - creates a GitHub release with `gh release create`
@@ -18,9 +26,10 @@ The release script:
 Manual equivalent:
 
 ```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
-gh release create v0.1.0 --title "v0.1.0" --notes "Initial release"
+version="$(cat VERSION)"
+git tag -a "$version" -m "$version"
+git push origin "$version"
+gh release create "$version" --title "$version" --notes "Initial release"
 ```
 
 ## Add A Skill
@@ -28,8 +37,9 @@ gh release create v0.1.0 --title "v0.1.0" --notes "Initial release"
 1. Add the skill folder under `.agents/skills/<name>/`.
 2. Add `.agents/skills/<name>/SKILL.md` with YAML frontmatter containing `name` and `description`.
 3. Keep bundled assets or helper scripts inside the skill folder.
-4. Update the `Included Skills` list in `README.md`.
-5. Run `./scripts/validate-skills.sh`.
+4. Treat bundled `SKILL.md` files as package-managed. Target repos should put local skill extensions in `<installed-skill>/USER.md`, which the installer preserves during refresh.
+5. Update the `Included Skills` list in `README.md`.
+6. Run `./scripts/validate-skills.sh`.
 
 ## Test Installer Changes
 
@@ -41,7 +51,7 @@ Run the full installer smoke test:
 
 The test installs into temporary git repos and checks default all-agent install,
 `--codex`, `--amp`, `--pi`, `--claude`, second-run idempotency, managed block
-replacement, and `--force`.
+replacement, skill refresh on update, and legacy `--force` compatibility.
 
 For shell changes, also run ShellCheck when it is installed:
 
@@ -84,4 +94,11 @@ Then update `THIRD_PARTY.md` with the copied commit and license, and run:
 ```bash
 ./scripts/validate-skills.sh
 ./scripts/test-install.sh
+./scripts/diff-opentasks-upstream.sh
 ```
+
+The upstream comparison is networked, so GitHub Actions runs it in the
+scheduled/manual `opentasks provenance` workflow rather than on every pull
+request. A failure means `.agents/skills/opentasks` differs from the commit
+recorded in `THIRD_PARTY.md`; either refresh the vendored copy from that commit
+or update `THIRD_PARTY.md` to the new copied commit after reviewing the change.

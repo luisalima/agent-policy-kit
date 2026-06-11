@@ -1,0 +1,14 @@
+name: opentasks provenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * 1"
+
+jobs:
+  compare-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare vendored opentasks with recorded upstream commit
+        run: ./scripts/diff-opentasks-upstream.sh

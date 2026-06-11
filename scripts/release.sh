@@ -8,7 +8,7 @@ Usage: scripts/release.sh VERSION [--notes NOTES]
 Creates and publishes a GitHub release for the current commit.
 
 Examples:
-  scripts/release.sh v0.1.0
+  scripts/release.sh "$(cat VERSION)"
   scripts/release.sh 0.1.0 --notes "Initial release"
 
 Requires:
@@ -18,10 +18,25 @@ Requires:
 EOF
 }
 
+run_gate() {
+  local label="$1"
+  shift
+
+  echo "Running $label..."
+  if ! "$@"; then
+    echo "ERROR: readiness gate failed: $label" >&2
+    exit 1
+  fi
+}
+
 if [ "$#" -lt 1 ]; then
   usage >&2
   exit 2
 fi
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+package_root="$(cd "$script_dir/.." && pwd)"
+expected_version="$(sed -n '1p' "$package_root/VERSION")"
 
 case "$1" in
   -h|--help)
@@ -37,6 +52,11 @@ case "$version" in
   v*) tag="$version" ;;
   *) tag="v$version" ;;
 esac
+
+if [ "$tag" != "$expected_version" ]; then
+  echo "ERROR: release tag $tag does not match VERSION ($expected_version)" >&2
+  exit 1
+fi
 
 notes=""
 
@@ -76,6 +96,12 @@ if ! command -v gh >/dev/null 2>&1; then
   echo "ERROR: gh CLI is required to create the GitHub release." >&2
   exit 1
 fi
+
+run_gate "skill metadata validation" "$package_root/scripts/validate-skills.sh"
+run_gate "release version validation" "$package_root/scripts/validate-version.sh" "$package_root"
+run_gate "release version validation tests" "$package_root/scripts/test-version.sh"
+run_gate "installer smoke tests" "$package_root/scripts/test-install.sh"
+run_gate "ShellCheck" shellcheck "$package_root"/scripts/*.sh
 
 if [ -z "$notes" ]; then
   notes="Release $tag"

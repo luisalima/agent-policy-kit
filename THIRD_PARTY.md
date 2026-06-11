@@ -3,7 +3,7 @@
 ## `opentasks` Skill
 
 - Upstream: `https://github.com/luisalima/opentasks-skill`
-- Copied commit: `e34d18b`
+- Copied commit: `e34d18b8d554a706105d8bd6403e952dc580f50a`
 - License: MIT, preserved in `.agents/skills/opentasks/LICENSE`
 
 Update process:
@@ -19,4 +19,8 @@ rm -rf .agents/skills/opentasks/.git
 ```
 
 After updating, replace the copied commit above, confirm the upstream license,
-and run the installer and skill validation tests.
+run the installer and skill validation tests, and compare the vendored copy:
+
+```bash
+./scripts/diff-opentasks-upstream.sh
+```

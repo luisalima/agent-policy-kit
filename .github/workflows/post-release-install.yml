@@ -1,0 +1,21 @@
+name: Post-release install
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag to verify
+        required: true
+        default: v0.1.0
+
+jobs:
+  documented-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify documented release install
+        env:
+          RELEASE_VERSION: ${{ github.event.release.tag_name || inputs.version }}
+        run: ./scripts/test-release-install.sh "$RELEASE_VERSION"

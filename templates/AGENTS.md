@@ -6,6 +6,7 @@
 - When the repo lacks linting for changed code or a new language/toolchain: use the linters skill
 - Before closing any task or raising a PR: use the done skill
 - When making a costly or hard-to-reverse architectural decision: use the adr skill
+- When using a skill, also read `USER.md` in the same skill directory if it exists; it contains local instructions that extend the package-managed `SKILL.md`
 - When blocked, uncertain, or two requirements conflict: stop and ask - never guess
 - Tests assert observable behavior, not implementation; they must survive a refactor
 

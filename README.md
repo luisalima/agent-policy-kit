@@ -40,10 +40,10 @@ Flags can be combined:
 ./scripts/install.sh --target /path/to/repo --pi --claude
 ```
 
-Replace already installed skill folders:
+Re-run the installer to update already installed skill folders:
 
 ```bash
-./scripts/install.sh --target /path/to/repo --force
+./scripts/install.sh --target /path/to/repo
 ```
 
 ## What Gets Installed
@@ -54,7 +54,9 @@ Default install:
 AGENTS.md
 CLAUDE.md
 .agents/skills/<skill>/SKILL.md
+.agents/skills/<skill>/USER.md (optional local extension)
 .claude/skills/<skill>/SKILL.md
+.claude/skills/<skill>/USER.md (optional local extension)
 ```
 
 Agent mapping:
@@ -66,7 +68,10 @@ Agent mapping:
 
 The installer does not overwrite existing `AGENTS.md` or `CLAUDE.md` files. It
 appends or updates only the managed `agent-policy-kit` block when needed.
-Existing skill folders are kept unless `--force` is used.
+Installed skill folders are refreshed on every run so targets receive skill
+updates from the package. Bundled `SKILL.md` files are package-managed and may
+be overwritten during refresh. Put local skill instructions in `USER.md` beside
+the installed `SKILL.md`; the installer preserves that file on normal installs.
 
 ## Included Skills
 
@@ -97,7 +102,8 @@ For Pi, invoke the same skill as:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). CI runs installer smoke tests,
-`git diff --check`, skill metadata validation, and ShellCheck when available.
+`git diff --check`, skill metadata validation, release-version validation, and
+ShellCheck.
 
 ## License
 

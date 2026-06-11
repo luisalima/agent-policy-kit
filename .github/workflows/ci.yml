@@ -12,19 +12,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
       - name: Check whitespace
         run: git diff --check
 
       - name: Validate skill metadata
         run: ./scripts/validate-skills.sh
 
+      - name: Validate release version references
+        run: ./scripts/validate-version.sh
+
+      - name: Test release version validation
+        run: ./scripts/test-version.sh
+
+      - name: Test release script
+        run: ./scripts/test-release.sh
+
+      - name: Test post-release workflow
+        run: ./scripts/test-post-release-workflow.sh
+
+      - name: Test provenance workflow
+        run: ./scripts/test-provenance-workflow.sh
+
       - name: Run installer smoke tests
         run: ./scripts/test-install.sh
 
       - name: Run ShellCheck
-        run: |
-          if command -v shellcheck >/dev/null 2>&1; then
-            shellcheck scripts/*.sh
-          else
-            echo "ShellCheck is not installed; skipping"
-          fi
+        run: shellcheck scripts/*.sh
