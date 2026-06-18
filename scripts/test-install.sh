@@ -284,4 +284,71 @@ cmp -s "$repo/AGENTS.md" "$before_agents" || fail "reversed-block AGENTS.md was 
 cmp -s "$repo/CLAUDE.md" "$before_claude" || fail "CLAUDE.md was rewritten after reversed-block preflight failure"
 assert_contains "$repo/.agents/skills/opentasks/PRESERVE" "keep installed skill"
 
+# Default install must not touch agent tool config.
+repo="$tmp_root/no-hooks"
+make_repo "$repo"
+run_install "$repo"
+assert_no_path "$repo/scripts/hooks"
+assert_no_path "$repo/.claude/settings.json"
+assert_no_path "$repo/.codex/hooks.json"
+
+# --with-hooks wires Claude config and copies hook scripts.
+repo="$tmp_root/hooks-claude"
+make_repo "$repo"
+run_install "$repo" --claude --with-hooks
+assert_file "$repo/scripts/hooks/check_git_push.py"
+assert_file "$repo/scripts/hooks/check_secret_edit.py"
+assert_file "$repo/.claude/settings.json"
+assert_contains "$repo/.claude/settings.json" "check_git_push.py"
+assert_contains "$repo/.claude/settings.json" "check_secret_edit.py"
+assert_contains "$repo/.claude/settings.json" "CLAUDE_PROJECT_DIR"
+python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$repo/.claude/settings.json" \
+  || fail "claude settings.json is not valid JSON"
+
+# Re-running is idempotent: still exactly one entry per kit hook script.
+run_install "$repo" --claude --with-hooks
+assert_count 1 "check_git_push.py" "$repo/.claude/settings.json"
+assert_count 1 "check_secret_edit.py" "$repo/.claude/settings.json"
+
+# --with-hooks wires Codex config.
+repo="$tmp_root/hooks-codex"
+make_repo "$repo"
+run_install "$repo" --codex --with-hooks
+assert_file "$repo/scripts/hooks/check_git_push.py"
+assert_file "$repo/.codex/hooks.json"
+assert_contains "$repo/.codex/hooks.json" "check_git_push.py"
+assert_contains "$repo/.codex/hooks.json" "git rev-parse"
+
+# Merge preserves pre-existing config and unrelated PreToolUse entries.
+repo="$tmp_root/hooks-preserve"
+make_repo "$repo"
+mkdir -p "$repo/.claude"
+cat > "$repo/.claude/settings.json" <<'EOF'
+{
+  "model": "opus",
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "echo custom" } ] }
+    ]
+  }
+}
+EOF
+run_install "$repo" --claude --with-hooks
+assert_contains "$repo/.claude/settings.json" "\"model\""
+assert_contains "$repo/.claude/settings.json" "echo custom"
+assert_contains "$repo/.claude/settings.json" "check_git_push.py"
+python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$repo/.claude/settings.json" \
+  || fail "merged settings.json is not valid JSON"
+
+# A malformed existing config aborts instead of being clobbered.
+repo="$tmp_root/hooks-malformed"
+make_repo "$repo"
+mkdir -p "$repo/.claude"
+printf '{ not valid json' > "$repo/.claude/settings.json"
+before_settings="$(mktemp)"
+cp "$repo/.claude/settings.json" "$before_settings"
+assert_install_fails "$repo" --claude --with-hooks
+cmp -s "$repo/.claude/settings.json" "$before_settings" \
+  || fail "malformed settings.json was rewritten"
+
 echo "install smoke tests passed"

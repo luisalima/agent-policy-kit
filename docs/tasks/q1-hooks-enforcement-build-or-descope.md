@@ -1,8 +1,9 @@
 ---
-status: todo
+status: done
 type: question
 owner: luisa
 created: 2026-06-11
+closed: 2026-06-18
 ---
 
 # Q1. Should the hooks enforcement layer be built or descoped from the proposal?
@@ -20,3 +21,10 @@ installer does not touch agent settings. Today every rule is soft policy.
 **Still open:** whether installer-managed agent config is acceptable for
 target repos, and which hooks (push gate, secret edit) are worth the
 maintenance cost across agents.
+
+**Answer (2026-06-18, luisa):** Build it, but as an opt-in `--with-hooks`
+installer flag rather than always-on. Default installs stay gentle and never
+touch agent tool config; only `--with-hooks` writes `.claude/settings.json` /
+`.codex/hooks.json` and copies the hook scripts. This keeps the soft-policy
+default while giving adopters who want hard enforcement a path to it. Recorded
+in ADR-001; implementation tracked as T21.

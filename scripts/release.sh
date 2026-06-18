@@ -101,6 +101,7 @@ run_gate "skill metadata validation" "$package_root/scripts/validate-skills.sh"
 run_gate "release version validation" "$package_root/scripts/validate-version.sh" "$package_root"
 run_gate "release version validation tests" "$package_root/scripts/test-version.sh"
 run_gate "installer smoke tests" "$package_root/scripts/test-install.sh"
+run_gate "hook tests" "$package_root/scripts/test-hooks.sh"
 run_gate "ShellCheck" shellcheck "$package_root"/scripts/*.sh
 
 if [ -z "$notes" ]; then

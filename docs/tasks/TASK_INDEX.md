@@ -36,8 +36,9 @@
 - [x] [T18. Add untrusted-content rule](t18-add-untrusted-content-rule.md) — `done` → templates/AGENTS.md
 - [x] [T19. Clarify USER.md vs SKILL.md precedence](t19-clarify-user-md-precedence.md) — `done` → templates/AGENTS.md
 - [x] [T20. Move threat-model output location under docs/](t20-move-threat-model-output-to-docs.md) — `done` → .agents/skills/threat-model/SKILL.md
+- [x] [T21. Implement opt-in hook enforcement](t21-implement-opt-in-hook-enforcement.md) — `done` → scripts/hooks/, scripts/install.sh, docs/adr/ADR-001-opt-in-hook-enforcement.md
 
 ## Open questions
 
-**For luisa:**
-- [ ] [Q1. Should the hooks enforcement layer be built or descoped from the proposal?](q1-hooks-enforcement-build-or-descope.md) — `todo`
+**Answered (history):**
+- [x] [Q1. Should the hooks enforcement layer be built or descoped from the proposal?](q1-hooks-enforcement-build-or-descope.md) — `done`

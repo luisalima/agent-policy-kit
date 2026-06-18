@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install.sh [--target PATH] [--codex | --amp | --pi | --claude] [--force]
+Usage: scripts/install.sh [--target PATH] [--codex | --amp | --pi | --claude] [--with-hooks] [--force]
 
 Installs the repo-local agent operating policy into a target repository.
 
@@ -13,6 +13,10 @@ Options:
   --amp           Install Amp support: AGENTS.md + .agents/skills.
   --pi            Install Pi support: AGENTS.md + .agents/skills.
   --claude        Install Claude support: CLAUDE.md + .claude/skills.
+  --with-hooks    Also install opt-in enforcement hooks (force-push and secret
+                  guards). Copies scripts/hooks/ into the target and wires
+                  .claude/settings.json (Claude) and/or .codex/hooks.json
+                  (Codex). Requires python3.
   --codex-only    Legacy alias for --codex.
   --claude-only   Legacy alias for --claude.
   --force         Legacy compatibility flag. Skill folders are always refreshed.
@@ -30,6 +34,7 @@ target="."
 agent_flag_seen=0
 install_shared=0
 install_claude=0
+install_hooks=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --target)
@@ -62,6 +67,10 @@ while [ "$#" -gt 0 ]; do
       install_claude=1
       shift
       ;;
+    --with-hooks)
+      install_hooks=1
+      shift
+      ;;
     --force)
       shift
       ;;
@@ -85,6 +94,11 @@ fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 package_root="$(cd "$script_dir/.." && pwd)"
 target_root="$(cd "$target" && pwd)"
+
+if [ "$install_hooks" -eq 1 ] && ! command -v python3 >/dev/null 2>&1; then
+  echo "ERROR: --with-hooks requires python3, which was not found on PATH" >&2
+  exit 1
+fi
 
 validate_managed_block() {
   local destination="$1"
@@ -256,6 +270,26 @@ copy_all_skills() {
   done
 }
 
+copy_hook_scripts() {
+  local destination_dir="$target_root/scripts/hooks"
+  local hook
+
+  mkdir -p "$destination_dir"
+  for hook in "$package_root"/scripts/hooks/*.py; do
+    [ -f "$hook" ] || continue
+    cp "$hook" "$destination_dir/$(basename "$hook")"
+  done
+  echo "installed ${destination_dir#"$target_root"/}"
+}
+
+merge_hook_config() {
+  local config_file="$1"
+  local flavor="$2"
+
+  python3 "$package_root/scripts/merge_hook_config.py" "$config_file" "$flavor"
+  echo "wired ${config_file#"$target_root"/} ($flavor hooks)"
+}
+
 if [ "$install_shared" -eq 1 ]; then
   validate_managed_block "$target_root/AGENTS.md"
 fi
@@ -272,6 +306,17 @@ fi
 if [ "$install_claude" -eq 1 ]; then
   append_or_create "$target_root/CLAUDE.md" "$package_root/templates/CLAUDE.md" "## Shared Agent Policy"
   copy_all_skills "$package_root/.agents/skills" "$target_root/.claude/skills"
+fi
+
+if [ "$install_hooks" -eq 1 ]; then
+  copy_hook_scripts
+  if [ "$install_claude" -eq 1 ]; then
+    merge_hook_config "$target_root/.claude/settings.json" claude
+  fi
+  if [ "$install_shared" -eq 1 ]; then
+    merge_hook_config "$target_root/.codex/hooks.json" codex
+    echo "note: the shared hook config targets Codex; Amp/Pi receive the hook scripts but no wiring."
+  fi
 fi
 
 echo

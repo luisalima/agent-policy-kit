@@ -261,6 +261,11 @@ Never plan horizontal layers (all models first, then all controllers, etc.).
 
 ## 3. Hooks (hard enforcement)
 
+> **Status:** Implemented as an opt-in `--with-hooks` installer flag (see
+> ADR-001). Default installs remain advisory and never touch agent tool config.
+> `--with-hooks` copies the hook scripts into the target and merges the wiring
+> below into `.claude/settings.json` and/or `.codex/hooks.json`.
+
 Hooks are not portable by file path. Keep the hook logic in shared scripts, then
 wire each agent to those scripts through its native config.
 
