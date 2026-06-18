@@ -14,6 +14,15 @@ Walk the TDD cycle for the current task:
 5. Run the suite again. Confirm green.
 6. Keep the change focused.
 
+## Bugfix Discipline
+
+For bug fixes, the reproduction is the failing test:
+
+1. Reproduce the bug before changing any code.
+2. Capture the reproduction as a failing regression test.
+3. Fix the root cause, not the symptom.
+4. Run the suite. Confirm the regression test passes and nothing else broke.
+
 ## Spike Exception
 
 If the behavior is unknown, such as UI layout, an unfamiliar API, or prompt engineering:
