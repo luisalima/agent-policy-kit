@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Adds a `sandbox` skill: confirm untrusted code (dependency installs, fetched
+  or third-party code) runs isolated from the host, fall back to a container when
+  the host is exposed, stop and ask when neither is available, and prefer
+  shipping a container run path so the user need not install the toolchain.
+- Adds an always-on rule and dispatch trigger for host-isolation before running
+  untrusted code.
+
 ## v0.2.0
 
 - Adds separate `security-review` and `threat-model` skills.

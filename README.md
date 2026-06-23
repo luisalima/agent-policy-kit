@@ -89,6 +89,8 @@ the installed `SKILL.md`; the installer preserves that file on normal installs.
 - `security-review`: focused security review after substantial
   security-impacting implementation changes.
 - `threat-model`: threat modeling before security-relevant architecture work.
+- `sandbox`: confirm untrusted code runs isolated from the host (container
+  fallback when not sandboxed) and ship a container run path for the user.
 - `tdd`: test-first implementation workflow.
 - `done`: definition-of-done checklist.
 - `adr`: architectural decision record workflow.
