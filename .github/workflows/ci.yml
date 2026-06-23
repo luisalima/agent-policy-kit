@@ -41,5 +41,8 @@ jobs:
       - name: Run installer smoke tests
         run: ./scripts/test-install.sh
 
+      - name: Run hook tests
+        run: ./scripts/test-hooks.sh
+
       - name: Run ShellCheck
         run: shellcheck scripts/*.sh

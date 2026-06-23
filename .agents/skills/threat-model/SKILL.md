@@ -75,5 +75,5 @@ expensive to change.
 - <assumption or question>
 ```
 
-Write the final Markdown to `<repo-or-path-name>-threat-model.md` unless the
-user asks for a different location.
+Write the final Markdown to `docs/threat-models/<repo-or-path-name>.md` unless
+the user asks for a different location.

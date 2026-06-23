@@ -40,6 +40,14 @@ Flags can be combined:
 ./scripts/install.sh --target /path/to/repo --pi --claude
 ```
 
+Opt in to enforcement hooks (off by default):
+
+```bash
+./scripts/install.sh --target /path/to/repo --claude --with-hooks
+```
+
+See [Enforcement Hooks](#enforcement-hooks-opt-in) below for what this installs.
+
 Re-run the installer to update already installed skill folders:
 
 ```bash
@@ -81,11 +89,39 @@ the installed `SKILL.md`; the installer preserves that file on normal installs.
 - `security-review`: focused security review after substantial
   security-impacting implementation changes.
 - `threat-model`: threat modeling before security-relevant architecture work.
+- `sandbox`: confirm untrusted code runs isolated from the host (container
+  fallback when not sandboxed) and ship a container run path for the user.
 - `tdd`: test-first implementation workflow.
 - `done`: definition-of-done checklist.
 - `adr`: architectural decision record workflow.
 - `spike`: declared exploratory-work workflow.
 - `slice`: vertical-slice planning workflow.
+
+## Enforcement Hooks (Opt-In)
+
+By default the policy is advisory: the rules in `AGENTS.md`/`CLAUDE.md` are
+instructions an agent is asked to follow, and the installer never touches agent
+tool configuration. Pass `--with-hooks` to add hard enforcement for two of the
+always-on rules:
+
+- `scripts/hooks/check_git_push.py` blocks `git push --force` /
+  `--force-with-lease` (backs the destructive-operations rule).
+- `scripts/hooks/check_secret_edit.py` blocks writes that contain a
+  high-confidence secret such as a private key or cloud access key (backs the
+  secrets rule).
+
+`--with-hooks` copies those scripts into the target's `scripts/hooks/` and wires
+them in as `PreToolUse` hooks:
+
+- Claude Code: merged into `.claude/settings.json` (requires `--claude`).
+- Codex: merged into `.codex/hooks.json` (requires `--codex`/`--amp`/`--pi`).
+
+The merge is idempotent and preserves any existing config and unrelated hooks; a
+config file that is not valid JSON aborts the install rather than being
+overwritten. `python3` must be on `PATH`. Amp and Pi receive the hook scripts
+but no wiring — their hook mechanisms are out of scope. The guards are
+defense-in-depth, not airtight: they bias toward low false positives and allow
+inputs they cannot parse.
 
 ## After Install
 

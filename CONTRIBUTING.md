@@ -4,7 +4,7 @@
 
 Checklist:
 
-- Run `./scripts/validate-skills.sh`, `./scripts/validate-version.sh`, `./scripts/test-install.sh`, and `shellcheck scripts/*.sh`.
+- Run `./scripts/validate-skills.sh`, `./scripts/validate-version.sh`, `./scripts/test-install.sh`, `./scripts/test-hooks.sh`, and `shellcheck scripts/*.sh`.
 - Confirm the README release install command is pinned to the tag being released.
 - Tag and publish the release.
 - Test install from the released tag with `./scripts/test-release-install.sh <tag>`.
@@ -58,6 +58,21 @@ For shell changes, also run ShellCheck when it is installed:
 ```bash
 shellcheck scripts/*.sh
 ```
+
+## Test Hook Changes
+
+The opt-in enforcement hooks and their installer wiring have their own test
+suite:
+
+```bash
+./scripts/test-hooks.sh
+```
+
+It `py_compile`s the hook scripts and the merge helper, and asserts that
+`check_git_push.py` blocks force-pushes, `check_secret_edit.py` blocks
+high-confidence secrets, and both allow benign or unparseable input. The
+`--with-hooks` installer wiring (config merge, idempotency, malformed-config
+abort) is covered by `./scripts/test-install.sh`.
 
 ## Update `templates/AGENTS.md`
 
